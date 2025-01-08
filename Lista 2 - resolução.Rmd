@@ -21,6 +21,7 @@ rm(list = ls())
 
 ```{r chk1, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 library(readr)
+library(texreg)
 ```
 
 # 1. Extraindo o banco de dados da PNAD dos arquivos “PES2006.txt” e “DOM2006.txt” e organizando como os dicionários.
@@ -48,7 +49,7 @@ pnad_completa <- pnad_completa[pnad_completa$UF == 31,]
 
 # Gerando as variáveis
 
-```{r chk4, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+```{r chk3, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 pnad_completa <- subset(pnad_completa, V2403 !=9)
 pnad_completa$PBF <- ifelse(pnad_completa$V2403 == 1, 1, 0)
 
@@ -93,7 +94,7 @@ pnad_completa$renda_lchefepc <- (pnad_completa$V4721 - pnad_completa$V4719) / pn
 ```
 
 
-```{r chk5, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+```{r chk4, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 filhos_menos_14 <- aggregate(
   V0402 ~ V0102 + V0103, 
   data = pnad_completa[pnad_completa$V0402 == 3 & pnad_completa$V8005 < 14, ], 
@@ -120,7 +121,7 @@ pnad_completa <- subset(pnad_completa, V0401 == 1 | V0401 == 2)
 # Estimando o modelo
 
 
-```{r chk6, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+```{r chk5, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 eq.horas_trabalho <- horas_trabalho ~ PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + renda_lchefepc
 
 reg.eq.horas_trabalho <- lm(eq.horas_trabalho, data = pnad_completa)
@@ -130,11 +131,17 @@ screenreg(reg.eq.horas_trabalho, digits = 4, custom.model.names = c("eq 1"))
 ```
 
 
+1.a. É possível que o recebimento do bolsa-família esteja correlacionado com as horas de trabalho pois o desemprego pode ser mais alto entre pessoas que tem renda mais baixa. Portanto isso poderia causar um probelema de endegeneidade. Além disso, pode haver um problema de omissão de variáveis relevantes, por exemplo, a saúde dos indivíuos que pode afetar tanto a quantidade de horas trabalhadas como o recebimento do bolsa-família.
+
+Para ter um efeito estimado confiável, o modelo precisa atender às hipóteses: (1) Exogeneidade de PBF, o recebimento do bolsa-família não pode estar correlacionado com o erro; (2) Ausência de seleção, como o critério para receber o bolsa-família não é aleatório, PBF está correlacionado com as horas trabalhadas; (3) estabilidae da população e do programa, não pode haver mudanças estruturais importantes na população ou no programa durante o período analisado (ex.: alterações no valor do benefício).
 
 
+1.b. Estimando o Heckit
+
+```{r chk6, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 
 
-
+```
 
 
 

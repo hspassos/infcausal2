@@ -24,6 +24,7 @@ library(texreg)
 library(sandwich)
 library(lmtest)
 library(sampleSelection)
+library(MatchIt)
 ```
 
 # 1. Extraindo o banco de dados da PNAD dos arquivos “PES2006.txt” e “DOM2006.txt” e organizando como os dicionários.
@@ -165,6 +166,51 @@ Por último, o coeficiente da razão inversa de mills é de -30.858, isso implic
 pnad_completa$mills_values <- results.selectTS$invMillsRatio
 print(mean(pnad_completa$mills) *(-30.858))
 ```
+
+
+
+# 2. Estimando o efeito do tratamento sobre os tratados (ATT) usando Propensity Score Matching
+
+```{r chk8, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+set.seed(231101238)
+
+# Definindo semente para reprodutibilidade
+set.seed(1234567)
+pnad_completa[,"aleatorio"] <- runif(nrow(pnad_completa))
+pnad_completa <- pnad_completa[order(pnad_completa$aleatorio, method = "auto"),]
+rownames(pnad_completa) <- NULL
+
+# Selecionando as variáveis relevantes
+pnad.filtered <- pnad_completa[, c("particip_mercado_trabalho", "horas_trabalho", "PBF", "idade", "idade_quadrado", "escolaridade", "escolaridade_quadrado", "sexo", "negro_pardo", "casado", "rural", "lrenda", "filhos_mais_14", "filhos_menos_14")]
+pnad.filtered$id <- row.names(pnad.filtered)
+pnad.filtered <- subset(pnad.filtered, complete.cases(pnad.filtered))
+pnad.filtered$id <- as.numeric(as.character(pnad.filtered$id))
+
+psm_model <- matchit(PBF ~ idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + lrenda, 
+                   data = pnad.filtered, 
+                   distance="glm", link="probit", 
+                   method="nearest", m.order="largest", 
+                   discard="both", replace=TRUE, ratio=5)
+
+summary(psm_model)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

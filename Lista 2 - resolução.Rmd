@@ -22,6 +22,9 @@ rm(list = ls())
 ```{r chk1, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 library(readr)
 library(texreg)
+library(sandwich)
+library(lmtest)
+library(sampleSelection)
 ```
 
 # 1. Extraindo o banco de dados da PNAD dos arquivos “PES2006.txt” e “DOM2006.txt” e organizando como os dicionários.
@@ -110,7 +113,10 @@ filhos_mais_14 <- aggregate(
 colnames(filhos_mais_14) <- c("V0102", "V0103", "filhos_mais_14")
 
 pnad_completa <- merge(pnad_completa, filhos_menos_14, by = c("V0102","V0103"), all.x = TRUE)
+pnad_completa$filhos_menos_14[is.na(pnad_completa$filhos_menos_14)] <- 0
+
 pnad_completa <- merge(pnad_completa, filhos_mais_14, by = c("V0102","V0103"), all.x = TRUE)
+pnad_completa$filhos_mais_14[is.na(pnad_completa$filhos_mais_14)] <- 0
 
 
 pnad_completa <- subset(pnad_completa, V0401 == 1 | V0401 == 2)
@@ -139,8 +145,47 @@ Para ter um efeito estimado confiável, o modelo precisa atender às hipóteses:
 1.b. Estimando o Heckit
 
 ```{r chk6, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+model.probit <- particip_mercado_trabalho ~ PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + renda_lchefepc + filhos_mais_14 + filhos_menos_14
 
+result.probit <- glm(model.probit, data = pnad_completa, family = binomial(link="probit")) 
+result.probit$robse <- vcovHC(result.probit, method="arellano", type = "HC1")
 
+screenreg(list(coeftest(result.probit, result.probit$robse)), digits = 4,custom.model.names=c("eq 1"), include.adjrs = T, include.nobs = T)
+
+## Prever variável latente
+pnad_completa$xb <- predict.glm(result.probit, newdata = pnad_completa,
+        type = c("link"),
+        se.fit = FALSE, dispersion = NULL, terms = NULL,
+        na.action = na.pass)
+
+# Razão de Mills Inversa
+pnad_completa$Cumulative.norm <- pnorm(pnad_completa$xb)
+pnad_completa$dens.norm<-dnorm(pnad_completa$xb) 
+pnad_completa$mills<-pnad_completa$dens.norm/pnad_completa$Cumulative.norm
+
+# Heckit
+eq.Heckit <- horas_trabalho ~ mills + PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + renda_lchefepc
+
+results.mills <- lm(eq.Heckit,pnad_completa[pnad_completa$particip_mercado_trabalho==1,],  na.action=na.exclude)
+screenreg(list(reg.eq.horas_trabalho, coeftest(results.mills,vcov = vcovHC)), digits = 3,custom.model.names=c("OLS", "Heckit"))
+```
+
+1.c. O coeficiente negativo mostra que receber o bolsa família reduz a quantidade de horas trabalhadas, quando uma pessoa passa a receber o bols-família, ela tende a trabalhar -0,949 hora.
+
+1.d. Possivelmente o efeito no modelo OLS tinha um viés devido à auto-seleção que levava a um impacto estimado maior do bolsa-família. O modelo Heckit corrige esse viés separando a decisão de trabalhar da decisão de quantas horas trabalhar, assim o coeficiente de PBF reflete o impacto nas horas trabalhadas apenas para aqueles que estão trabalhando.
+
+1.e. 
+
+```{r chk7, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+erro_probit <- resid(result.probit)
+erro_ols <- resid(reg.eq.horas_trabalho)
+cov_erro <- cov(erro_probit, erro_ols)
+
+sigma_probit <- sd(erro_probit)
+sigma_ols <- sd(erro_ols)
+
+rho <- cov_erro / (sigma_probit * sigma_ols)
+print(rho)
 ```
 
 

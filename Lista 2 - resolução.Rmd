@@ -6,7 +6,6 @@ output:
   pdf_document: html_document
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -94,8 +93,8 @@ pnad_completa <- subset(pnad_completa, V4719 != "999 999 999 999")
 pnad_completa <- subset(pnad_completa, V4721 != "999 999 999 999")
 pnad_completa <- subset(pnad_completa, V4741 != "999 999 999 999")
 pnad_completa$renda_lchefepc <- (pnad_completa$V4721 - pnad_completa$V4719) / pnad_completa$V4741
+pnad_completa$lrenda <-ifelse(pnad_completa$renda_lchefepc == 0, 0, log(pnad_completa$renda_lchefepc))
 ```
-
 
 ```{r chk4, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 filhos_menos_14 <- aggregate(
@@ -123,12 +122,10 @@ pnad_completa <- subset(pnad_completa, V0401 == 1 | V0401 == 2)
 
 ```
 
-
 # Estimando o modelo
 
-
 ```{r chk5, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
-eq.horas_trabalho <- horas_trabalho ~ PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + renda_lchefepc
+eq.horas_trabalho <- horas_trabalho ~ PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + lrenda
 
 reg.eq.horas_trabalho <- lm(eq.horas_trabalho, data = pnad_completa)
 
@@ -136,69 +133,38 @@ summary((reg.eq.horas_trabalho))
 screenreg(reg.eq.horas_trabalho, digits = 4, custom.model.names = c("eq 1"))
 ```
 
-
 1.a. É possível que o recebimento do bolsa-família esteja correlacionado com as horas de trabalho pois o desemprego pode ser mais alto entre pessoas que tem renda mais baixa. Portanto isso poderia causar um probelema de endegeneidade. Além disso, pode haver um problema de omissão de variáveis relevantes, por exemplo, a saúde dos indivíuos que pode afetar tanto a quantidade de horas trabalhadas como o recebimento do bolsa-família.
 
 Para ter um efeito estimado confiável, o modelo precisa atender às hipóteses: (1) Exogeneidade de PBF, o recebimento do bolsa-família não pode estar correlacionado com o erro; (2) Ausência de seleção, como o critério para receber o bolsa-família não é aleatório, PBF está correlacionado com as horas trabalhadas; (3) estabilidae da população e do programa, não pode haver mudanças estruturais importantes na população ou no programa durante o período analisado (ex.: alterações no valor do benefício).
 
-
 1.b. Estimando o Heckit
 
 ```{r chk6, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
-model.probit <- particip_mercado_trabalho ~ PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + renda_lchefepc + filhos_mais_14 + filhos_menos_14
-
-result.probit <- glm(model.probit, data = pnad_completa, family = binomial(link="probit")) 
-result.probit$robse <- vcovHC(result.probit, method="arellano", type = "HC1")
-
-screenreg(list(coeftest(result.probit, result.probit$robse)), digits = 4,custom.model.names=c("eq 1"), include.adjrs = T, include.nobs = T)
-
-## Prever variável latente
-pnad_completa$xb <- predict.glm(result.probit, newdata = pnad_completa,
-        type = c("link"),
-        se.fit = FALSE, dispersion = NULL, terms = NULL,
-        na.action = na.pass)
-
-# Razão de Mills Inversa
-pnad_completa$Cumulative.norm <- pnorm(pnad_completa$xb)
-pnad_completa$dens.norm<-dnorm(pnad_completa$xb) 
-pnad_completa$mills<-pnad_completa$dens.norm/pnad_completa$Cumulative.norm
-
-# Heckit
-eq.Heckit <- horas_trabalho ~ mills + PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + renda_lchefepc
-
-results.mills <- lm(eq.Heckit,pnad_completa[pnad_completa$particip_mercado_trabalho==1,],  na.action=na.exclude)
-screenreg(list(reg.eq.horas_trabalho, coeftest(results.mills,vcov = vcovHC)), digits = 3,custom.model.names=c("OLS", "Heckit"))
+results.selectTS <- heckit(selection = particip_mercado_trabalho ~ PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + lrenda + filhos_mais_14 + filhos_menos_14,
+                           outcome = horas_trabalho ~ PBF + idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + lrenda,
+                           data = pnad_completa,
+                           subset = (!is.na(pnad_completa$horas_trabalho)) & (pnad_completa$horas_trabalho>0),
+                           method = "2step")
+screenreg(list(results.selectTS), digits = 3,custom.model.names=c("eq2"))
 ```
 
-1.c. O coeficiente negativo mostra que receber o bolsa família reduz a quantidade de horas trabalhadas, quando uma pessoa passa a receber o bols-família, ela tende a trabalhar -0,949 hora.
+1.c. O coeficiente negativo mostra que receber o bolsa família reduz a quantidade de horas trabalhadas, quando uma pessoa passa a receber o bolsa-família, ela tende a trabalhar -0,91 hora.
 
 1.d. Possivelmente o efeito no modelo OLS tinha um viés devido à auto-seleção que levava a um impacto estimado maior do bolsa-família. O modelo Heckit corrige esse viés separando a decisão de trabalhar da decisão de quantas horas trabalhar, assim o coeficiente de PBF reflete o impacto nas horas trabalhadas apenas para aqueles que estão trabalhando.
 
-1.e. 
+1.e. $\rho$ é -1.54, essa correlação mostra que havia um viés de seleção significativo que foi corrigido pelo heckit. Como o valor é negativo, existe uma relação inversa entre a quantidade de horas trabalhadas e a participação no mercado de trabalho (quanto menos horas a pessoa precisar trabalhar, mais provavel será de ela tomar a decisão de trabalhar), pessoas que trabalhavam muitas horas e poderiam receber o bolsa-família tem maior chance de sair do emprego recebendo o auxílio.
+
+O desvio padrão do erro do modelo de horas trabalhadas $\sigma$ é significativamente alto, mostrando que há variabilidade nas horas trabalhadas que não é explicada pelas variáveis no modelo, o que é esperado em qualquer regressão.
+
+Por último, o coeficiente da razão inversa de mills é de -30.858, isso implica que a probabilidade de trabalhar está negativamente correlacionada com as horas trabalhadas,  como o valor absoluto do coeficiente é muito maior que o erro-padrão, o coeficiente é altamente significativo.
+
+
+1.f. A correção do número de horas trabalhadas da população ocupada no mercado formal é calculada multiplicando o coeficiente da razão inversa de Mills pela média dos valores da razão de Mills. Conforme feito no código abaixo, o valor da correção é -5,49. Esse é o viés de selação médio da amostra, isso significa que, em média, a população ocupada está reportando 5,49 horas a mais por semana do que seria esperado sem o viés de seleção.
 
 ```{r chk7, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
-erro_probit <- resid(result.probit)
-erro_ols <- resid(reg.eq.horas_trabalho)
-cov_erro <- cov(erro_probit, erro_ols)
-
-sigma_probit <- sd(erro_probit)
-sigma_ols <- sd(erro_ols)
-
-rho <- cov_erro / (sigma_probit * sigma_ols)
-print(rho)
+pnad_completa$mills_values <- results.selectTS$invMillsRatio
+print(mean(pnad_completa$mills) *(-30.858))
 ```
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

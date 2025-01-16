@@ -25,6 +25,7 @@ library(sandwich)
 library(lmtest)
 library(sampleSelection)
 library(MatchIt)
+library(mfx)
 ```
 
 # 1. Extraindo o banco de dados da PNAD dos arquivos “PES2006.txt” e “DOM2006.txt” e organizando como os dicionários.
@@ -197,13 +198,31 @@ summary(psm_model)
 ```
 
 
+2.a. A hipótese de independência condicional que diz que os valores estimdos dado o tratamento $Y(T)$ são independentes ao tratamento dadas as covariáveis $T|P(X)$.
 
 
+2.b. As variáveis que tiveram efeito estatístico significativo foram idade, idade ao quadrado e rural. O coeficiente da dummy rural é 0.2213, pessoas que moram em zonas rurais têm 22,13% de chance de receber o bolsa família. Quanto à idade, a relação é uma função de segundo grau decrerscente quando $x<45$, isso significa qua até os 45 anos, quanto mais velho, menor será a chance de a pessoa receber o bolsa família, após isso a idade aumenta a probabilidade de a pessoa receber o auxílio.
+
+```{r chk8, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+probit_model <- probitmfx(PBF ~ idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + lrenda, 
+                    data = pnad.filtered, 
+                    atmean=TRUE, robust=TRUE)
+
+screenreg(list(probit_model), digits=4)
+```
 
 
+2.c.
 
+```{r chk9, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+m.out.3 <- matchit(PBF ~ idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + lrenda, 
+                   data = pnad.filtered, 
+                   distance="glm", link="probit", 
+                   method="nearest", m.order="largest", 
+                   discard="both", replace=TRUE, ratio=1)
 
-
+summary(m.out.3)
+```
 
 
 

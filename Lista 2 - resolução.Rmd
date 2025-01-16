@@ -26,6 +26,10 @@ library(lmtest)
 library(sampleSelection)
 library(MatchIt)
 library(mfx)
+library(cobalt)
+library(weights)
+library(survey)
+library(haven)
 ```
 
 # 1. Extraindo o banco de dados da PNAD dos arquivos “PES2006.txt” e “DOM2006.txt” e organizando como os dicionários.
@@ -212,24 +216,78 @@ screenreg(list(probit_model), digits=4)
 ```
 
 
-2.c.
+2.c. O efeito de tratamento foi de -2.362343. Isso significa que receber o bolsa-família faz as pessoas trabalharem em média duas horas a menos.
 
 ```{r chk9, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
-m.out.3 <- matchit(PBF ~ idade + idade_quadrado + escolaridade + escolaridade_quadrado + sexo + negro_pardo + casado + rural + lrenda, 
-                   data = pnad.filtered, 
-                   distance="glm", link="probit", 
-                   method="nearest", m.order="largest", 
-                   discard="both", replace=TRUE, ratio=1)
+# Obter o ATT
+matched_data <- match.data(psm_model)
 
-summary(m.out.3)
+# Média do desfecho para os tratados e controles
+mean_treated <- mean(matched_data$horas_trabalho[matched_data$PBF == 1])
+mean_control <- mean(matched_data$horas_trabalho[matched_data$PBF == 0])
+
+# ATT
+ATT <- mean_treated - mean_control
+ATT
 ```
 
 
+2.d.
+
+```{r chk10, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+# Preparação dos dados
+data <- pnad.filtered  # Usar seus dados
+data$weight <- 1       # Criar uma variável de peso igual a 1 para comparações sem peso
+
+# Realizar o pareamento com MatchIt
+psm_model <- matchit(PBF ~ idade + idade_quadrado + escolaridade + escolaridade_quadrado + 
+                     sexo + negro_pardo + casado + rural + lrenda,
+                     data = data, 
+                     method = "nearest", 
+                     distance = "glm", 
+                     link = "probit", 
+                     ratio = 5, 
+                     discard = "both")
+
+# Dados antes e após o pareamento
+matched_data <- match.data(psm_model)  # Dados pareados
+
+# Teste t antes do pareamento
+t.test(idade ~ PBF, data = data)
+
+# Teste t depois do pareamento
+t.test(idade ~ PBF, data = matched_data)
+
+# Dados antes do pareamento
+design_pre <- svydesign(ids = ~1, data = data, weights = ~weight)
+
+# Teste ponderado antes do pareamento
+svyttest(idade ~ PBF, design = design_pre)
+
+# Dados depois do pareamento
+design_post <- svydesign(ids = ~1, data = matched_data, weights = ~weights)
+
+# Teste ponderado depois do pareamento
+svyttest(idade ~ PBF, design = design_post)
+
+# Love plot (antes e depois do pareamento)
+love.plot(psm_model, stats = "mean.diffs", abs = TRUE)
+```
 
 
+2.e.
+
+```{r chk11, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+plot(psm_model, discrete.cutoff = 5, type = "hist", numdraws = 5000, interactive = TRUE, which.xs = NULL)
+```
 
 
+#3. Avaliação randomizada controlada
 
+```{r chk11, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+inep <- read_dta("~/mestrado/infcausal/Lista_2/Material apoio PB 2005/Depara/depara_codmunic_inep_ibge.dta")
+cesgranrio <- read_dta("~/mestrado/infcausal/Lista_2/Material apoio PB 2005/Depara/depara_municipio_cesgranrio.dta")
 
+```
 
 

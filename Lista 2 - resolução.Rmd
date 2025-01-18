@@ -284,10 +284,26 @@ plot(psm_model, discrete.cutoff = 5, type = "hist", numdraws = 5000, interactive
 
 #3. Avaliação randomizada controlada
 
-```{r chk11, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
-inep <- read_dta("~/mestrado/infcausal/Lista_2/Material apoio PB 2005/Depara/depara_codmunic_inep_ibge.dta")
-cesgranrio <- read_dta("~/mestrado/infcausal/Lista_2/Material apoio PB 2005/Depara/depara_municipio_cesgranrio.dta")
+```{r chk12, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+#inep <- read_dta("~/mestrado/infcausal/Lista_2/Material apoio PB 2005/Depara/depara_codmunic_inep_ibge.dta")
+#cesgranrio <- read_dta("~/mestrado/infcausal/Lista_2/Material apoio PB 2005/Depara/depara_municipio_cesgranrio.dta")
+pb <- read_dta("~/mestrado/infcausal/Lista_2/base_PB2005_4serie_cod.dta", encoding="latin1")
+
+
+pb <- pb[pb$serie == 4, ]
+```
+
+
+3.a.
+
+```{r chk13, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+
 
 ```
+
+
+
+
+
 
 

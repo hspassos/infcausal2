@@ -331,6 +331,35 @@ n_adjusted
 ```
 
 
+################################################################
+
+# 5. Tipos de desenhos de experimentos
+
+5.a. A aleatorização simples permite uma imparcialidade nos dados quando as variáveis independentes não são correlacionadas com os erros, isso permite permite eliminar viéses de seleção. Além disso, a implementação é fácil e é possível utilizar testes estatísticos paramétricos tradicionais. É adequado usar essse método para amostras grandes e populaćões homogêneas mas em caso de variabilidade significativa da população pode não ser adequado pois exigiria um balanceamento rigoroso das variáveis.
+
+
+5.b. O escalonamento de tratamento pode ser indicado quando existem restrições de recursos, assim o tratamento vai sendo implementado gradualmente em diferentes grupos ou locais ao longo do tempo permitindo analisar os efeitos do tratamento em diferentes contextos podendo, por exemplo, avaliar os efeitos ao longo do tempo. Outra vantagem é poder avaliar a eficácia e a viabilidade da intervenção em pequena escala antes de expandi-la para todos os participantes ou locais. As vantagens envolvem o custo baixo pois os testes são feitos em grupos menores e a flexibilidade da implementação. No entanto, esse método pode demorar até ter efeitos observados além de poder haver contaminação entre os grupos criando problemas de endogeneidade. Esse desenho também pode ser inadequado para emergências ou intervenções com efeitos de curto prazo.
+
+
+5.c. A Randomização Intra-Grupo consiste em alocar participantes aleatoriamente dentro de subgrupos homogêneos (ex.: escolas, comunidades), controlando variáveis de confusão e aumentando a comparabilidade entre grupos. É ideal em populações heterogêneas, com estruturas hierárquicas naturais, ou quando se deseja evitar contaminação entre os grupos. Suas vantagens incluem maior validade interna, controle de variabilidade entre grupos e respeito às estruturas existentes. No entanto, é menos adequada em subgrupos pequenos ou com alta variabilidade interna, em intervenções aplicadas ao nível do grupo, ou quando os custos logísticos e analíticos são altos. É especialmente útil em estudos com populações diversas ou grandes escalas.
+
+
+5.d. Oversubscription ocorre quando a demanda por uma intervenção ou programa excede a capacidade de oferta. Nesse cenário, é possível usar um método aleatório para selecionar quem participará (ex.: sorteios), transformando-o em um experimento natural. Isso garante alocação justa, reduz viés e oferece um grupo controle genuíno (não selecionado). É mais adequado quando o programa não pode atender a todos os interessados por limitações de recursos ou logística, como em programas sociais ou educacionais. Sua principal limitação é que os resultados podem não ser generalizáveis para populações fora do grupo inscrito. É uma abordagem prática e ética para avaliar intervenções em contextos de alta demanda.
+
+
+5.e. Desenho de Incentivos é usada quando não é possível randomizar diretamente quem recebe a intervenção. Em vez disso, os participantes são aleatoriamente incentivados a adotar o tratamento (ex.: por meio de informação, subsídios ou benefícios). Isso cria uma variável instrumental para estimar o impacto causal do tratamento, comparando quem foi incentivado com quem não foi. É útil quando há barreiras éticas ou práticas à randomização direta. Sua eficácia depende de o incentivo aumentar significativamente a adesão ao tratamento. Limitações incluem baixa aderência ao incentivo e desafios para interpretar resultados em populações que não respondem ao estímulo. É comum em estudos de saúde, educação e políticas públicas.
+
+
+#6. 
+
+
+
+
+
+
+
+
+
 
 
 

@@ -294,34 +294,41 @@ pb <- pb[pb$serie == 4, ]
 ```
 
 
-3.a. Como a distância entre cada ponto da escala SAEB é de 25 pontos, o MDES é de 25 e o tamanho da amostra deve ser de pelo menos 54.528
+3.a. O tamanho da amostra deve ser de pelo menos 8368.002
 
 ```{r chk13, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 sigma <- sd(pb$profic_mat, na.rm = TRUE)
-power.t.test(n = NULL, delta = 25, sd = sigma , sig.level = 0.05, power = 0.9, type = c("two.sample"), alternative = c("two.sided"))
+power.t.test(n = NULL, delta = 2, sd = sigma , sig.level = 0.05, power = 0.9, type = c("two.sample"), alternative = c("two.sided"))
 
 ```
 
 
-3.b. Agora a amostra deve ter tamanho 35.26
+3.b. Agora a amostra deve ter tamanho 5355.867
 
 ```{r chk14, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
-power.t.test(n = NULL, delta = 25 / 0.8, sd = sigma , sig.level = 0.05, power = 0.9, type = c("two.sample"), alternative = c("two.sided"))
+power.t.test(n = NULL, delta = 2 / 0.8, sd = sigma , sig.level = 0.05, power = 0.9, type = c("two.sample"), alternative = c("two.sided"))
 
 ```
 
 
-3.c. A amostra agora deverá ser de 39.178.
+3.c. A amostra agora deverá ser de 5950.963
 
 ```{r chk15, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
-result <- power.t.test(n = NULL, delta = 25 / 0.8, sd = sigma , sig.level = 0.05, power = 0.9, type = c("two.sample"), alternative = c("two.sided"))
+result <- power.t.test(n = NULL, delta = 2 / 0.8, sd = sigma , sig.level = 0.05, power = 0.9, type = c("two.sample"), alternative = c("two.sided"))
 
 n_adjusted <- result$n / (1-0.1)
 n_adjusted
 ```
 
 
+3.d. O tamanho necessário da amostra no item "a" é de 8368 alunos. Pelo custo de acompanhar cada aluno, a restrićão é ativa pois o custo total será maior que R$200.000. 
 
+```{r chk16, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+result <- power.t.test(n = NULL, delta = 25 / 0.8, sd = sigma , sig.level = 0.05, power = 0.9, type = c("two.sample"), alternative = c("two.sided"))
+
+n_adjusted <- result$n / (1-0.1)
+n_adjusted
+```
 
 
 

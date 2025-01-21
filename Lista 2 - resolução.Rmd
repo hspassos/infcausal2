@@ -334,7 +334,7 @@ n_adjusted
 
 #6.
 
-```{r chk16, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+```{r chk18, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 texas <- read_dta("~/mestrado/infcausal/Lista_2/texas13.dta")
 texas <- na.omit(texas)
 ```
@@ -342,7 +342,7 @@ texas <- na.omit(texas)
 
 
 
-```{r chk16, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
+```{r chk19, echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 dataprep.out <- dataprep(
   foo = texas,                        # Conjunto de dados
   predictors = c("income", "poverty", "ur", "black", "perc1519", "alcohol", "aidscapita"),  # Covariadas preditivas
